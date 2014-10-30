@@ -1,0 +1,49 @@
+#!/bin/python
+
+import os
+import subprocess
+
+PUBLIC_HTML_DIR = "/var/www/html/"
+URL_TO_KIBANA_TAR = "https://download.elasticsearch.org/kibana/kibana/kibana-3.1.1.tar.gz"
+
+def installKibana():
+    downloadKibanaTar()
+    unpackKibanaTar()
+    copyTarToPublicHtml()
+    cleanUp()
+
+def downloadKibanaTar():
+    command = "wget -P /tmp/ " + URL_TO_KIBANA_TAR
+    errorMessage = "Failed to download kibana tar file from " + URL_TO_KIBANA_TAR
+    runCommand(command, errorMessage)
+
+def unpackKibanaTar():
+    tarName = URL_TO_KIBANA_TAR.split("/")[-1]
+    pathToTar = "/tmp/" + tarName
+    command = "tar -C /tmp/ -xzvf " + pathToTar
+    errorMessage = "Failed to extract tar file at" + pathToTar
+    runCommand(command, errorMessage)
+
+def cleanUp():
+    filesToDelete = "/tmp/kibana*"
+    command = "rm -rf " + filesToDelete
+    errorMessage = "Failed to delete files: " + filesToDelete
+    runCommand(command, errorMessage)
+
+def copyTarToPublicHtml():
+    filesToCopy = "/tmp/" + URL_TO_KIBANA_TAR.split("/")[-1][:-7] + "/*"  # remove .tar.gz extension
+    command = "cp -r " + filesToCopy + " " + PUBLIC_HTML_DIR
+    errorMessage = "Failed to copy " + filesToCopy + " to " + PUBLIC_HTML_DIR
+    runCommand(command, errorMessage)
+
+def runCommand(command, errorMessageWhenFailure):
+    exitCode = subprocess.call(command, shell=True)
+    if exitCode != 0:
+        raise Exception(errorMessageWhenFailure)
+
+def main():
+    if not os.listdir(PUBLIC_HTML_DIR):
+        installKibana()
+
+main()
+

@@ -1,0 +1,49 @@
+"""
+    Copyright 2013 KU Leuven Research and Development - iMinds - Distrinet
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+    Administrative Contact: dnet-project-office@cs.kuleuven.be
+    Technical Contact: arnaud.schoonjans@cs.kuleuven.be
+"""
+
+entity Kibana extends ip::services::Server:
+	"""
+	    The kibana tool
+	"""
+end
+
+elasticsearch::ElasticSearch elasticsearch [1] -- [0:] Kibana kibana
+
+implementation kibana:
+	# Install dependencies install script
+	wgetPackage = std::Package(name = "wget", host = self.host, state="installed")
+    	tarPackage = std::Package(name = "tar", host = self.host, state="installed")
+	httpdPackage = std::Package(name = "httpd", host = self.host, state="installed")
+	
+	# Install kibana files
+ 	install_kibana_script = std::File(host = self.host, path = "/usr/bin/install_kibana", 
+	owner = "root", group = "root", mode = 755, content = file("kibana/install_kibana"))
+
+	install_kibana_service_file = std::File(host = self.host, path = "/lib/systemd/system/install_kibana.service", 
+	owner = "root", group = "root", mode = 644, content = file("kibana/install_kibana.service"))
+       
+       	install_kibana_service = std::Service(name = "install_kibana", state = "running", onboot = true, 
+	requires = [wgetPackage, tarPackage, httpdPackage, install_kibana_script, install_kibana_service_file], host = self.host)
+
+	# Start httpd service
+        httpd_service = std::Service(name = "httpd", state = "running", onboot = true, requires = [install_kibana_service], host = self.host)
+	
+end
+
+implement Kibana using kibana

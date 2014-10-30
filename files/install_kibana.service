@@ -1,0 +1,12 @@
+[Unit]
+Description=Service for installing the kibana query result visualisation tool 
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+ExecStart=/usr/bin/install_kibana
+
+[Install]
+WantedBy=multi-user.target
